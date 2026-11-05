@@ -1946,52 +1946,6 @@ do
     print("[V1-BYPASS] Real-time ban bypass ON")
   end
 
-  -- 2. Advanced magic/aim bypass
-  local function InitializeAdvancedMagicAimbotBypass()
-    pcall(function()
-      local WeaponEntity = import("ShootWeaponEntity")
-      if WeaponEntity then
-        if not _G.OrigCalcDamage then _G.OrigCalcDamage = WeaponEntity.CalcDamage end
-        WeaponEntity.CalcDamage = function(self, HitResult, DamageCauser, ...)
-          local baseDamage = _G.OrigCalcDamage(self, HitResult, DamageCauser, ...)
-          if _G.XthrlenConfig and _G.XthrlenConfig.CustomMagicBullet then
-            local scale = 1.0
-            if _G.XthrlenState and _G.XthrlenState.CustomTextData then
-              local bone = HitResult and HitResult.BoneName or "body"
-              local boneLower = string.lower(tostring(bone))
-              if boneLower:find("head") then scale = _G.XthrlenState.CustomTextData.MagicHead or 1.0
-              elseif boneLower:find("spine") or boneLower:find("chest") or boneLower:find("pelvis") then
-                scale = _G.XthrlenState.CustomTextData.MagicBody or 1.0
-              else scale = _G.XthrlenState.CustomTextData.MagicLegs or 1.0 end
-            end
-            local variation = 0.95 + (math.random() * 0.10)
-            local finalDamage = baseDamage * scale * variation
-            if finalDamage > baseDamage * 5.0 then finalDamage = baseDamage * 5.0 end
-            return finalDamage
-          end
-          return baseDamage
-        end
-      end
-
-      local AutoAimComp = import("AutoAimComponent")
-      if AutoAimComp then
-        local origUpdate = AutoAimComp.UpdateAiming
-        AutoAimComp.UpdateAiming = function(self, ...)
-          if _G.XthrlenConfig and (_G.XthrlenConfig.CustomAimbot or _G.XthrlenConfig.AimTouchEnable) then
-            local speedMultiplier = 0.8 + (math.random() * 0.4)
-            if self.AimAssistConfig and self.AimAssistConfig.OuterRange then
-              local baseSpeed = self.AimAssistConfig.OuterRange.Speed or 50
-              self.AimAssistConfig.OuterRange.Speed = baseSpeed * speedMultiplier
-            end
-            if math.random() < 0.05 then return end
-          end
-          return origUpdate(self, ...)
-        end
-      end
-    end)
-    print("[V1-BYPASS] Advanced magic/aim ON")
-  end
-
   -- 3. Ultimate anti-ban (movement + shoot spoofing)
   local function InitializeUltimateAntiBan()
     pcall(function()
@@ -2088,7 +2042,6 @@ do
     print("  V1.LUA BYPASS v6.0 - ALL 6 BATCHES LOADED")
     print("════════════════════════════════════════════════")
     pcall(RealTimeBanBypass)
-    pcall(InitializeAdvancedMagicAimbotBypass)
     pcall(InitializeUltimateAntiBan)
     print("✅ libanogs.so 10-year patches")
     print("✅ Ban detection block")
@@ -2096,7 +2049,6 @@ do
     print("✅ Complete anti-ban (60+ subsystems)")
     print("✅ Spoofer (Device + DNS + HWID)")
     print("✅ Real-time ban bypass")
-    print("✅ Magic/aim masking")
     print("✅ Ultimate anti-ban shield")
     print("════════════════════════════════════════════════")
     print("📋 Commands:")
@@ -2373,7 +2325,7 @@ _G.LexusConfig = _G.LexusConfig or {}
 _G.LexusConfig.IpadView = _G.LexusConfig.IpadView or false
 _G.LexusState = _G.LexusState or {}
 _G.LexusState.CustomTextData = _G.LexusState.CustomTextData or {}
-_G.LexusState.CustomTextData.IpadViewFOV = _G.LexusState.CustomTextData.IpadViewFOV or 120
+_G.LexusState.CustomTextData.IpadViewFOV = _G.LexusState.CustomTextData.IpadViewFOV or 113
 
 -- g_vipserver_GetLocalPlayer made by VIP Server
 local function g_vipserver_GetLocalPlayer()
@@ -3678,11 +3630,7 @@ do
         {Key="LunarWall",UI=AliasMap.Switcher,Text="Wall Hack",ExpandIndex=0,EventType=F.ESPSettingsEventType,EventID=3,GetFunc=function() return featureState().Settings.WallEnabled end,
             SetFunc=function(c,v) featureState().SetWall(value(c,v));return true end},
         {Key="LunarIpad",UI=AliasMap.Switcher,Text="iPad View",ExpandIndex=0,GetFunc=function() return _G.LexusConfig.IpadView end,
-            SetFunc=function(c,v) featureState().SetIpad(value(c,v));return true end},
-        {Key="LunarAim",UI=AliasMap.Switcher,Text="Aimbot V1",ExpandIndex=0,
-            EventType=F.AimSettingsEventType,EventID=F.AimSettingsEventID,
-            GetFunc=function() return featureState().Settings.AimEnabled end,
-            SetFunc=function(c,v) featureState().SetAim(value(c,v));return true end}
+            SetFunc=function(c,v) featureState().SetIpad(value(c,v));return true end}
     }
     -- Verified native settings item contract: absolute Min/Max values, native
     -- key/value callbacks, and expansion events owned by the game's page.
@@ -3699,21 +3647,6 @@ do
         table.insert(Other,3,rangeItem("LunarIpadFOV","iPad FOV",90,120,"LunarIpad",
             function() return featureState().Settings.IpadFOV end,"SetIpadFOV"))
     end
-    if sliderReady then
-        Other[#Other+1]=rangeItem("LunarAimSpeed","Aim speed",100,115,"LunarAim",
-            function() return featureState().Settings.AimSpeed end,"SetAimSpeed")
-    end
-    Other[#Other+1]={Key="LunarAimTarget",UI=AliasMap.Switcher,Text="Aim target",ExpandHandle="LunarAim",
-        SwitcherText={"Head","Body","Leg"},SwitcherValue={1,2,3},
-        GetFunc=function() return featureState().Settings.AimTarget end,
-        SetFunc=function(c,v) featureState().SetAimTarget(value(c,v));return true end}
-    Other[#Other+1]={Key="LunarAim2",UI=AliasMap.Switcher,Text="Aimbot V2",
-        EventType=F.AimSettingsEventType,EventID=F.AimSettingsEventID,
-        GetFunc=function() return featureState().Settings.Aim2Enabled end,
-        SetFunc=function(c,v) featureState().SetAim2(value(c,v));return true end}
-    Other[#Other+1]={Key="LunarMortarAim",UI=AliasMap.Switcher,Text="Mortar aim",
-        GetFunc=function() return featureState().Settings.MortarEnabled end,
-        SetFunc=function(c,v) featureState().SetMortar(value(c,v));return true end}
     local names={"Pink","White","Cyan","Green","Yellow","Saffron","Red"}
     for i,entry in ipairs({{"WallVisible","Visible color"},{"WallOccluded","Behind-wall color"}}) do
         local key,label=entry[1],entry[2]
@@ -6667,20 +6600,18 @@ do
         if not v or v~=v or v==math.huge or v==-math.huge then v=fallback end
         return math.floor(math.max(lo,math.min(hi,v))+0.5)
     end
-    F.Clamp=number
-    settings.IpadFOV=number(settings.IpadFOV or _G.LexusState.CustomTextData.IpadViewFOV,90,120,120)
-    settings.AimSpeed=number(settings.AimSpeed,100,120,100)
-    settings.AimTarget=number(settings.AimTarget,1,3,1)
-    settings.AimEnabled=settings.AimEnabled==true
-    settings.WallEnabled=settings.WallEnabled==true
-    settings.WallVisible=number(settings.WallVisible,1,7,1)
-    settings.WallOccluded=number(settings.WallOccluded,1,7,2)
-    settings.Aim2Enabled=settings.Aim2Enabled==true
-    settings.MortarEnabled=settings.MortarEnabled==true
+     F.Clamp=number
+    settings.IpadFOV=number(settings.IpadFOV or _G.LexusState.CustomTextData.IpadViewFOV,90,120,113)
+    
+    settings.WallEnabled=true
+    settings.WallVisible=number(settings.WallVisible,1,7,4)
+    settings.WallOccluded=number(settings.WallOccluded,1,7,6)
+    
     _G.g_Botmater_ESPOptions=_G.g_Botmater_ESPOptions or {}
-    for _,key in ipairs({"Name","Line","Health","Distance","EnemyCounter"}) do
-        if _G.g_Botmater_ESPOptions[key]==nil then _G.g_Botmater_ESPOptions[key]=false end
-    end
+for _,key in ipairs({"Name","Line","Health","Distance","EnemyCounter"}) do
+    if _G.g_Botmater_ESPOptions[key]==nil then _G.g_Botmater_ESPOptions[key]=true end
+end
+    
     local paths=g_vipserver_ESPSettingsPaths()
     for i,path in ipairs(paths) do paths[i]=path:gsub("VIP_SERVER_UMG_ESP_settings.lua$","VIP_SERVER_FEATURES_V3_settings.lua") end
     if io and io.open then
@@ -6691,15 +6622,15 @@ do
                 pcall(function() file:close() end)
                 if readOK and type(payload)=="string" then
                     F.SettingsReadPath=path
-                    for _,key in ipairs({"AimEnabled","WallEnabled","IpadEnabled","Aim2Enabled","MortarEnabled"}) do
+                    for _,key in ipairs({"WallEnabled","IpadEnabled"}) do
                         local val=payload:match("%f[%w_]"..key.."%s*=%s*(%a+)")
                         if val=="true" or val=="false" then
                             if key=="IpadEnabled" then _G.LexusConfig.IpadView=val=="true" else settings[key]=val=="true" end
                         end
                     end
-                    for _,key in ipairs({"IpadFOV","AimSpeed","AimTarget"}) do
+                    for _,key in ipairs({"IpadFOV"}) do
                         local val=payload:match("%f[%w_]"..key.."%s*=%s*([%d%.%-]+)")
-                        if val then settings[key]=number(val,key=="IpadFOV" and 90 or (key=="AimSpeed" and 100 or 1),key=="AimTarget" and 3 or 120,settings[key]) end
+                        if val then settings[key]=number(val,90,120,settings[key]) end
                     end
                     for _,key in ipairs({"WallVisible","WallOccluded"}) do
                         local val=payload:match("%f[%w_]"..key.."%s*=%s*([%d%.%-]+)")
@@ -6721,7 +6652,6 @@ do
     if not F.SettingsReadPath and g_vipserver_ESPLoadedSettingsPath then
         F.SettingsReadPath=g_vipserver_ESPLoadedSettingsPath:gsub("VIP_SERVER_UMG_ESP_settings%.lua$","VIP_SERVER_FEATURES_V3_settings.lua")
     end
-    if settings.Aim2Enabled then settings.AimEnabled=false end
     _G.LexusState.CustomTextData.IpadViewFOV=settings.IpadFOV
     F.Now=function()
         local now=nil
@@ -6734,7 +6664,7 @@ do
     F.Save=function(force)
         if not F.Dirty or not io or not io.open then return end
         local lines={"return {", "  IpadEnabled = "..tostring(_G.LexusConfig.IpadView==true)..","}
-        for _,key in ipairs({"AimEnabled","WallEnabled","Aim2Enabled","MortarEnabled","IpadFOV","AimSpeed","AimTarget","WallVisible","WallOccluded"}) do lines[#lines+1]="  "..key.." = "..tostring(settings[key]).."," end
+        for _,key in ipairs({"WallEnabled","IpadFOV","WallVisible","WallOccluded"}) do lines[#lines+1]="  "..key.." = "..tostring(settings[key]).."," end
         for _,key in ipairs({"Name","Line","Health","Distance","EnemyCounter"}) do lines[#lines+1]="  V1_"..key.." = "..tostring(_G.g_Botmater_ESPOptions[key]==true).."," end
         for _,key in ipairs({"Name","Line","Box","Health","Distance","Skeleton","Counter"}) do lines[#lines+1]="  V2_"..key.." = "..tostring(_G.g_vipserver_ESPOptions[key]==true).."," end
         lines[#lines+1]="}"
@@ -6764,59 +6694,6 @@ do
         pcall(g_vipserver_ApplyiPadView)
         F.MarkDirty()
     end
-    F.SetAimSpeed=function(value)
-        local previousSpeed=settings.AimSpeed
-        settings.AimSpeed=number(value,100,120,100)
-        if settings.AimSpeed~=previousSpeed then
-            F.AimLastClock=nil;F.AimDue=0
-            if _G.XthrlenState then _G.XthrlenState.offPitch=0;_G.XthrlenState.offYaw=0 end
-        end
-        if _G.XthrlenState and _G.XthrlenState.CustomTextData then
-            local data=_G.XthrlenState.CustomTextData
-            data.AimTouchHipSpeed=settings.AimSpeed
-            data.AimTouchScopeSpeed=settings.AimSpeed
-        end
-        F.MarkDirty()
-    end
-    F.SetAimTarget=function(value) settings.AimTarget=number(value,1,3,1);F.MarkDirty(true) end
-    -- ItemBase supports caller-owned event keys. Both native switches subscribe
-    -- through its normal lifecycle; there are no saved widget references.
-    F.AimSettingsEventType=-14050701
-    F.AimSettingsEventID=1
-    F.SetAimMode=function(value)
-        local mode=F.Clamp(value,0,2,0)
-        local changed=settings.AimEnabled~=(mode==1) or settings.Aim2Enabled~=(mode==2)
-        settings.AimEnabled=mode==1
-        settings.Aim2Enabled=mode==2
-        _G.XthrlenConfig.AimTouchEnable=settings.AimEnabled
-        if not settings.AimEnabled then
-            _G.XthrlenState.offPitch=0;_G.XthrlenState.offYaw=0;F.AimLastClock=nil
-        end
-        if not settings.Aim2Enabled and F.Aim2 then F.Aim2.Stop() end
-        if F.Aim2 then F.Aim2.Due=0 end
-        F.MarkDirty(true)
-        if F.Wake then F.Wake() end
-        if changed and EventSystem and type(EventSystem.postEvent)=="function" then
-            local ok,err=pcall(EventSystem.postEvent,EventSystem,F.AimSettingsEventType,F.AimSettingsEventID)
-            if not ok then F.Error("Aim.SettingsRefresh",err) end
-        end
-    end
-    F.SetAim=function(enabled)
-        local on=enabled==true or enabled==1
-        F.SetAimMode(on and 1 or (settings.Aim2Enabled and 2 or 0))
-    end
-    F.SetAim2=function(enabled)
-        local on=enabled==true or enabled==1
-        F.SetAimMode(on and 2 or (settings.AimEnabled and 1 or 0))
-    end
-    F.SetMortar=function(enabled)
-        settings.MortarEnabled=enabled==true or enabled==1
-        if not settings.MortarEnabled and F.Mortar then F.Mortar.Stop() end
-        if F.Mortar then F.Mortar.Due=0 end
-        F.MarkDirty(true)
-        if F.Wake then F.Wake() end
-    end
-
     F.RefreshWallSettings=function()
         if EventSystem and type(EventSystem.postEvent)=="function" then
             local ok,err=pcall(EventSystem.postEvent,EventSystem,-14050701,3)
@@ -6936,471 +6813,7 @@ do
         if ESPShared.Events.UnbindAll then ESPShared.Events.UnbindAll() end
         if F.V1 then F.V1.Reset() end
         if F.Wall then F.Wall.Stop() end
-        if F.Aim2 then F.Aim2.Stop() end
-        if F.Mortar then F.Mortar.Stop() end
     end
-end
-
-do
-local AimV2,AimGameplayStatics,AimMath,AimUI
-pcall(function() AimV2=import("Vector2D") end)
-pcall(function() AimGameplayStatics=import("GameplayStatics") end)
-pcall(function() AimMath=import("KismetMathLibrary") end)
-pcall(function() AimUI=require("client.common.ui_util") end)
-_G.XthrlenConfig = _G.XthrlenConfig or {}
-_G.XthrlenState = _G.XthrlenState or {}
-_G.XthrlenState.CustomTextData = _G.XthrlenState.CustomTextData or {}
-
-_G.XthrlenConfig.AimTouchEnable        = _G.LunarFeatures.Settings.AimEnabled
-_G.XthrlenConfig.AimTouchHipfire       = true
-_G.XthrlenConfig.AimTouchScopeAll      = true
-_G.XthrlenConfig.AimTouchHipVisCheck   = true
-_G.XthrlenConfig.AimTouchScopeVisCheck = true
-_G.XthrlenConfig.AimTouchHipIgKnock    = true
-_G.XthrlenConfig.AimTouchScopeIgKnock  = true
-
-_G.XthrlenConfig.AimTouchHipIgBot      = false
-_G.XthrlenConfig.AimTouchScopeIgBot    = false
-_G.XthrlenConfig.AimTouchSG            = false
-_G.XthrlenConfig.AimTouchSGAutoFire    = false
-_G.XthrlenConfig.AimTouchScopeSniper   = false
-_G.XthrlenConfig.AimTouchMortar        = false
-_G.XthrlenConfig.EspFovCircle          = false
-
-_G.XthrlenState.CustomTextData.AimTouchHipPrio    = 1
-_G.XthrlenState.CustomTextData.AimTouchHipBone    = 1
-_G.XthrlenState.CustomTextData.AimTouchHipCond    = 1
-_G.XthrlenState.CustomTextData.AimTouchHipSpeed   = _G.LunarFeatures.Settings.AimSpeed
-_G.XthrlenState.CustomTextData.AimTouchHipDist    = 120
-_G.XthrlenState.CustomTextData.AimTouchHipFOV     = 30
-
-_G.XthrlenState.CustomTextData.AimTouchScopePrio   = 1
-_G.XthrlenState.CustomTextData.AimTouchScopeBone   = 1
-_G.XthrlenState.CustomTextData.AimTouchScopeCond   = 1
-_G.XthrlenState.CustomTextData.AimTouchScopeSpeed  = _G.LunarFeatures.Settings.AimSpeed
-_G.XthrlenState.CustomTextData.AimTouchScopeDist   = 120
-_G.XthrlenState.CustomTextData.AimTouchScopeFOV    = 30
-_G.XthrlenState.CustomTextData.AimTouchScopePred   = 0
-
-_G.XthrlenState.offPitch = _G.XthrlenState.offPitch or 0
-_G.XthrlenState.offYaw   = _G.XthrlenState.offYaw   or 0
-
-local function clampAngles(angles)
-    if angles.Pitch > 180 then angles.Pitch = angles.Pitch - 360 end
-    if angles.Pitch < -180 then angles.Pitch = angles.Pitch + 360 end
-
-    if angles.Pitch < -75 then
-        angles.Pitch = -75
-    elseif angles.Pitch > 75 then
-        angles.Pitch = 75
-    end
-
-    while angles.Yaw < -180 do angles.Yaw = angles.Yaw + 360 end
-    while angles.Yaw > 180  do angles.Yaw = angles.Yaw - 360 end
-
-    return angles
-end
-
-_G.GetEnemyTargetsFromActors = function(radius)
-    local result = {}
-    local player = GameplayData.GetPlayerCharacter()
-    if not (slua and slua.isValid and slua.isValid(player)) then return result end
-
-    local allCharacters = {}
-    if GameplayData.GetAllPlayerCharacters then
-        allCharacters = GameplayData.GetAllPlayerCharacters()
-    elseif GameplayData.GameCharacters then
-        for _, char in pairs(GameplayData.GameCharacters) do table.insert(allCharacters, char) end
-    end
-
-    local myTeam = player:GetTeamID()
-    for _, actor in pairs(allCharacters) do
-        if slua.isValid(actor) and actor ~= player and actor.GetTeamID and actor:IsAlive() then
-            if actor:GetTeamID() ~= myTeam then
-                local dist = player:GetDistanceTo(actor)
-                if dist <= radius then
-                    table.insert(result, actor)
-                end
-            end
-        end
-    end
-    return result
-end
-
-_G.AimTouch = function()
-    local ok,err=pcall(function()
-        if not _G.XthrlenConfig.AimTouchEnable then return end
-        
-        local player = GameplayData.GetPlayerCharacter()
-        if not (slua and slua.isValid and slua.isValid(player)) then return end
-        
-        local pc = player:GetPlayerControllerSafety()
-        if not (slua and slua.isValid and slua.isValid(pc)) then return end
-        
-        local isFiring = player.bIsWeaponFiring
-        local isADS = player.bIsGunADS
-        -- Both supplied hip/scope modes require firing. Return before scanning,
-        -- weapon classification, visibility checks or imports during idle play.
-        if not isFiring then return end
-        
-        local weapon = player.WeaponManagerComponent and player.WeaponManagerComponent.CurrentWeaponReplicated
-        if not weapon and type(player.GetCurrentShootWeapon) == "function" then
-            weapon = player:GetCurrentShootWeapon()
-        end
-        
-        if _G.LunarFeatures.Settings.MortarEnabled and weapon and weapon.MortarState==2 then return end
-        local isShotgun = false
-        local isSniper = false
-        local isMortar = false
-        local currentAmmo = 1
-        
-        if slua.isValid(weapon) then
-            local wID = type(weapon.GetWeaponID) == "function" and weapon:GetWeaponID() or 0
-            local wName = type(weapon.GetWeaponName) == "function" and weapon:GetWeaponName() or ""
-            
-            if (wID >= 1030000 and wID < 1040000) or wName:find("S686") or wName:find("S1897") or wName:find("S12") or wName:find("DBS") or wName:find("M1014") then 
-                isShotgun = true 
-            end
-            if wName:find("Kar98") or wName:find("M24") or wName:find("AWM") or wName:find("Mosin") or wName:find("Win94") or wName:find("AMR") or wName:find("SKS") or wName:find("SLR") or wName:find("Mini") or wName:find("Mk14") or wName:find("QBU") or wName:find("Mk12") or wName:find("VSS") then
-                isSniper = true
-            end
-            if wName:lower():find("mortar") or wName:lower():find("cối") then
-                isMortar = true
-            end
-            
-            if type(weapon.GetCurrentAmmo) == "function" then
-                currentAmmo = weapon:GetCurrentAmmo()
-            elseif weapon.ShootWeaponComponent and type(weapon.ShootWeaponComponent.GetCurrentAmmo) == "function" then
-                currentAmmo = weapon.ShootWeaponComponent:GetCurrentAmmo()
-            elseif weapon.CurrentAmmo ~= nil then
-                currentAmmo = weapon.CurrentAmmo
-            end
-        end
-
-        if _G.XthrlenState.IsAutoFiring then
-            pcall(function()
-                player.bIsWeaponFiring = false
-                if type(player.SetIsWeaponFiring) == "function" then player:SetIsWeaponFiring(false) end
-                if slua.isValid(pc) and type(pc.SetIsWeaponFiring) == "function" then pc:SetIsWeaponFiring(false) end
-                local wepMgr = player.WeaponManagerComponent
-                if slua.isValid(wepMgr) then wepMgr.bIsWeaponFiring = false end
-            end)
-            _G.XthrlenState.IsAutoFiring = false
-        end
-
-        if isShotgun and currentAmmo <= 0 then return end
-
-        local cond = 2
-        local prioMode = 1
-        local boneIdx = 1
-        local speedVal = 100
-        local fovVal = 30
-        local maxDistMeters = 100
-        local useVisCheck = false
-        local igKnock = false
-        local igBot = false
-        local predVal = 0 
-
-        if isMortar and _G.XthrlenConfig.AimTouchMortar then
-            local isPlaced = false
-            pcall(function()
-                if weapon and weapon.MortarState == 2 then isPlaced = true end
-            end)
-            if not isPlaced then return end
-
-            cond = 2 
-            prioMode = 1  
-            boneIdx = 4 
-            speedVal = 100 
-            fovVal = _G.XthrlenState.CustomTextData.AimTouchMortarFOV or 360 
-            maxDistMeters = 2000 
-            useVisCheck = false 
-            igKnock = false
-            igBot = false
-            predVal = _G.XthrlenState.CustomTextData.AimTouchMortarPred or 0 
-            
-        elseif isShotgun and _G.XthrlenConfig.AimTouchSG then
-            cond = _G.XthrlenState.CustomTextData.AimTouchSGCond or 1
-            if _G.XthrlenConfig.AimTouchSGAutoFire then cond = 2 end
-            if cond == 1 and not isFiring then return end
-            prioMode = _G.XthrlenState.CustomTextData.AimTouchSGPrio or 1
-            boneIdx = _G.XthrlenState.CustomTextData.AimTouchSGBone or 2
-            speedVal = _G.XthrlenState.CustomTextData.AimTouchSGSpeed or 80
-            fovVal = _G.XthrlenState.CustomTextData.AimTouchSGFOV or 40
-            maxDistMeters = _G.XthrlenState.CustomTextData.AimTouchSGDist or 30
-            useVisCheck = _G.XthrlenConfig.AimTouchSGVisCheck
-            igKnock = _G.XthrlenConfig.AimTouchSGIgKnock
-            igBot = _G.XthrlenConfig.AimTouchSGIgBot
-            
-        elseif isADS then
-            if isSniper and _G.XthrlenConfig.AimTouchScopeSniper then
-                cond = _G.XthrlenState.CustomTextData.AimTouchSniperCond or 2
-                if cond == 1 and not isFiring then return end
-                prioMode = _G.XthrlenState.CustomTextData.AimTouchSniperPrio or 1
-                boneIdx = _G.XthrlenState.CustomTextData.AimTouchSniperBone or 1
-                speedVal = _G.XthrlenState.CustomTextData.AimTouchSniperSpeed or 30
-                fovVal = _G.XthrlenState.CustomTextData.AimTouchSniperFOV or 20
-                maxDistMeters = _G.XthrlenState.CustomTextData.AimTouchSniperDist or 400
-                useVisCheck = _G.XthrlenConfig.AimTouchSniperVisCheck
-                igKnock = _G.XthrlenConfig.AimTouchSniperIgKnock
-                igBot = _G.XthrlenConfig.AimTouchSniperIgBot
-                predVal = _G.XthrlenState.CustomTextData.AimTouchSniperPred or 0
-            elseif _G.XthrlenConfig.AimTouchScopeAll then
-                cond = _G.XthrlenState.CustomTextData.AimTouchScopeCond or 1
-                if cond == 1 and not isFiring then return end
-                prioMode = _G.XthrlenState.CustomTextData.AimTouchScopePrio or 1
-                boneIdx = 1
-                speedVal = _G.XthrlenState.CustomTextData.AimTouchScopeSpeed or 100
-                fovVal = _G.XthrlenState.CustomTextData.AimTouchScopeFOV or 30
-                maxDistMeters = _G.XthrlenState.CustomTextData.AimTouchScopeDist or 100
-                useVisCheck = _G.XthrlenConfig.AimTouchScopeVisCheck
-                igKnock = _G.XthrlenConfig.AimTouchScopeIgKnock
-                igBot = _G.XthrlenConfig.AimTouchScopeIgBot
-                predVal = _G.XthrlenState.CustomTextData.AimTouchScopePred or 0
-            else
-                return
-            end
-        else
-            if not _G.XthrlenConfig.AimTouchHipfire then return end
-            cond = _G.XthrlenState.CustomTextData.AimTouchHipCond or 1
-            if cond == 1 and not isFiring then return end 
-            prioMode = _G.XthrlenState.CustomTextData.AimTouchHipPrio or 1
-            boneIdx = 1
-            speedVal = _G.XthrlenState.CustomTextData.AimTouchHipSpeed or 100
-            fovVal = _G.XthrlenState.CustomTextData.AimTouchHipFOV or 30
-            maxDistMeters = _G.XthrlenState.CustomTextData.AimTouchHipDist or 100
-            useVisCheck = _G.XthrlenConfig.AimTouchHipVisCheck
-            igKnock = _G.XthrlenConfig.AimTouchHipIgKnock
-            igBot = _G.XthrlenConfig.AimTouchHipIgBot
-        end
-
-        local currentMaxDist = maxDistMeters * 100 
-        local enemies = _G.GetEnemyTargetsFromActors(currentMaxDist)
-        if not enemies or #enemies == 0 then return end
-        
-        local FVector2D = AimV2
-        local UGameplayStatics = AimGameplayStatics
-        local KismetMathLibrary = AimMath
-        if not FVector2D or not UGameplayStatics or not KismetMathLibrary then return end
-        
-        local camManager = UGameplayStatics.GetPlayerCameraManager(pc, 0)
-        if not slua.isValid(camManager) then return end
-        
-        local camLoc = camManager:GetCameraLocation()
-        if not camLoc then return end
-        
-        local ui_util = AimUI
-        if not ui_util then return end
-        
-        local viewportSize = ui_util.GetViewportSize()
-        if not viewportSize then return end
-        
-        local centerX = viewportSize.X * 0.5
-        local centerY = viewportSize.Y * 0.5
-        local FOV_RADIUS = (fovVal / 100.0) * (viewportSize.X / 2.0)
-        
-        local bestTarget = nil
-        local bestScore = 99999999 
-        
-        local selected=_G.LunarFeatures.Settings.AimTarget
-        boneIdx=selected==2 and 2 or (selected==3 and 5 or 1)
-        local selBoneName=selected==2 and "spine_03" or (selected==3 and "calf_l" or "head")
-
-        for i, target in ipairs(enemies) do
-            repeat
-            if not slua.isValid(target) then break end
-            
-            pcall(function()
-                if slua.isValid(target.Mesh) then
-                    target.Mesh.MeshComponentUpdateFlag = 0
-                end
-            end)
-            
-            if igKnock and target.HealthStatus == 1 then break end
-            
-            if igBot then
-                local tIsBot = false
-                if target.bIsAI == true or target.IsAI == true then tIsBot = true end
-                local pState = target.PlayerState
-                if slua.isValid(pState) and (pState.bIsABot or pState.bIsBot) then tIsBot = true end
-                if tIsBot then break end
-            end
-            
-            if useVisCheck then
-                local curTime = _G.LunarFeatures.Now()
-                local tId = type(target.GetUniqueID) == "function" and target:GetUniqueID() or tostring(target)
-                _G.AimTouchVisCache = _G.AimTouchVisCache or {}
-                if not _G.AimTouchVisCache[tId] or curTime < _G.AimTouchVisCache[tId].time or (curTime - _G.AimTouchVisCache[tId].time) > 0.2 then
-                    local isHidden = true
-                    pcall(function() if pc:LineOfSightTo(target) then isHidden = false end end)
-                    _G.AimTouchVisCache[tId] = { hidden = isHidden, time = curTime }
-                end
-                if _G.AimTouchVisCache[tId].hidden then break end
-            end
-            
-            local tPos = target.GetBonePos and target:GetBonePos(selBoneName, {X=0, Y=0, Z=0})
-            if not tPos or (tPos.X == 0 and tPos.Y == 0 and tPos.Z == 0) then
-                if type(target.GetSocketLocation) == "function" then
-                    tPos = target:GetSocketLocation(selBoneName)
-                end
-            end
-            if not tPos or (tPos.X == 0 and tPos.Y == 0 and tPos.Z == 0) then
-                if type(target.K2_GetActorLocation) == "function" then
-                    tPos = target:K2_GetActorLocation()
-                    if tPos then
-                        if boneIdx == 1 then tPos.Z = tPos.Z + 70
-                        elseif boneIdx == 2 then tPos.Z = tPos.Z + 40
-                        elseif boneIdx == 3 then tPos.Z = tPos.Z + 20
-                        elseif boneIdx == 5 then tPos.Z = tPos.Z - 60 end
-                    end
-                end
-            end
-            if not tPos or (tPos.X == 0 and tPos.Y == 0 and tPos.Z == 0) then break end
-            
-            local screen = FVector2D()
-            local success,outScreen = pc:ProjectWorldLocationToScreen(tPos, screen, false)
-            if outScreen then screen=outScreen end
-            if not success or screen.X <= 0 or screen.Y <= 0 then break end
-            
-            local dx = screen.X - centerX
-            local dy = screen.Y - centerY
-            local distScreen = math.sqrt(dx*dx + dy*dy)
-            
-            if distScreen > FOV_RADIUS then break end
-            
-            local currentScore = distScreen
-            if prioMode == 2 then currentScore = player:GetDistanceTo(target)
-            elseif prioMode == 3 then currentScore = target.Health or 100
-            elseif prioMode == 4 then 
-                local hp = target.Health or 100
-                local maxhp = target.HealthMax or 100
-                if maxhp <= 0 then maxhp = 100 end
-                currentScore = hp / maxhp
-            end
-            
-            if currentScore < bestScore then
-                bestScore = currentScore
-                bestTarget = target
-            end
-            
-            until true
-        end
-        
-        local cache=_G.AimTouchVisCache
-        local clock=_G.LunarFeatures.Now()
-        if cache and (not _G.LunarFeatures.AimPruneDue or clock>=_G.LunarFeatures.AimPruneDue) then
-            for key,entry in pairs(cache) do if clock<entry.time or clock-entry.time>1 then cache[key]=nil end end
-            _G.LunarFeatures.AimPruneDue=clock+0.5
-        end
-        if not slua.isValid(bestTarget) then return end
-        
-        local finalBonePos = bestTarget.GetBonePos and bestTarget:GetBonePos(selBoneName, {X=0, Y=0, Z=0})
-        if not finalBonePos or (finalBonePos.X == 0 and finalBonePos.Y == 0 and finalBonePos.Z == 0) then
-            if type(bestTarget.GetSocketLocation) == "function" then
-                finalBonePos = bestTarget:GetSocketLocation(selBoneName)
-            end
-        end
-        if not finalBonePos or (finalBonePos.X == 0 and finalBonePos.Y == 0 and finalBonePos.Z == 0) then
-            if type(bestTarget.K2_GetActorLocation) == "function" then
-                finalBonePos = bestTarget:K2_GetActorLocation()
-                if finalBonePos then
-                    if boneIdx == 1 then finalBonePos.Z = finalBonePos.Z + 70
-                    elseif boneIdx == 2 then finalBonePos.Z = finalBonePos.Z + 40
-                    elseif boneIdx == 3 then finalBonePos.Z = finalBonePos.Z + 20
-                    elseif boneIdx == 5 then finalBonePos.Z = finalBonePos.Z - 60 end
-                end
-            end
-        end
-        if not finalBonePos or (finalBonePos.X == 0 and finalBonePos.Y == 0 and finalBonePos.Z == 0) then return end
-        
-        local tVelocity = nil
-        pcall(function()
-            if type(bestTarget.GetVelocity) == "function" then
-                tVelocity = bestTarget:GetVelocity()
-            end
-        end)
-
-        if not isMortar and predVal > 0 then
-            pcall(function()
-                if tVelocity and (tVelocity.X ~= 0 or tVelocity.Y ~= 0) then
-                    local distToEnemy = player:GetDistanceTo(bestTarget) / 100.0
-                    local ToF = (distToEnemy / 800.0) * (predVal / 50.0) 
-                    finalBonePos.X = finalBonePos.X + (tVelocity.X * ToF)
-                    finalBonePos.Y = finalBonePos.Y + (tVelocity.Y * ToF)
-                end
-            end)
-        end
-
-        if isADS and isFiring then
-            local dist = player:GetDistanceTo(bestTarget) / 100.0
-            finalBonePos.Z = finalBonePos.Z - (dist * 1.1)
-        end
-
-        local rot = KismetMathLibrary.FindLookAtRotation(camLoc, finalBonePos)
-        if not rot then return end
-        
-        local currentRot = pc:GetControlRotation()
-        if not currentRot then return end
-
-        if not isADS then
-            _G.XthrlenState.offPitch = 0
-            _G.XthrlenState.offYaw   = 0
-        end
-
-        local dPitch = rot.Pitch - currentRot.Pitch
-        local dYaw   = rot.Yaw   - currentRot.Yaw
-
-        if isADS then
-            local camRot = nil
-            if type(camManager.GetCameraRotation) == "function" then
-                camRot = camManager:GetCameraRotation()
-            end
-            if camRot then
-                dYaw   = dYaw   - (camRot.Yaw   - currentRot.Yaw)
-                dPitch = dPitch - (camRot.Pitch - currentRot.Pitch)
-            end
-        end
-
-        if dPitch~=dPitch or dYaw~=dYaw or math.abs(dPitch)==math.huge or math.abs(dYaw)==math.huge then return end
-        dPitch=(dPitch+180)%360-180
-        dYaw=(dYaw+180)%360-180
-
-        -- Displayed settings remain 100..120. The requested maximum applies
-        -- at most half the previous full correction; low settings are gentler.
-        local now=_G.LunarFeatures.Now()
-        local previous=_G.LunarFeatures.AimLastClock
-        local dt=previous and math.max(0.001,math.min(0.05,now-previous)) or 0.011
-        _G.LunarFeatures.AimLastClock=now
-        local normalized=(_G.LunarFeatures.Clamp(speedVal,100,120,100)-100)/20.0
-        local strength=0.02+0.48*normalized*normalized
-        local alpha=math.min(0.5,1.0-(1.0-strength)^(dt/0.011))
-        local maxTurnRate=10.0+35.0*normalized
-
-        -- Camera-relative ADS error already accounts for view/controller offset.
-        -- Repeatedly accumulating target error causes windup and unwanted swipes.
-        _G.XthrlenState.offPitch=0;_G.XthrlenState.offYaw=0
-        local apply={Pitch=currentRot.Pitch+dPitch,Yaw=currentRot.Yaw+dYaw,Roll=0}
-
-        local pitchDelta=(apply.Pitch-currentRot.Pitch+180)%360-180
-        local yawDelta=(apply.Yaw-currentRot.Yaw+180)%360-180
-        local pitchStep,yawStep=pitchDelta*alpha,yawDelta*alpha
-        local stepLength=math.sqrt(pitchStep*pitchStep+yawStep*yawStep)
-        local stepLimit=maxTurnRate*dt
-        if stepLength>stepLimit then
-            local scale=stepLimit/stepLength
-            pitchStep=pitchStep*scale;yawStep=yawStep*scale
-        end
-        local out={Pitch=currentRot.Pitch+pitchStep,Yaw=currentRot.Yaw+yawStep,Roll=0}
-
-        out = clampAngles(out)
-        pc:SetControlRotation(out, "AimTouch")
-    end)
-    if not ok then _G.LunarFeatures.Error("Aim",err) end
-end
-
-
-
-_G.LunarFeatures.Aim={Tick=_G.AimTouch}
 end
 
 -- Preserve the reference's DrawDyeing/Highlight/IdeaOutline settings and cadence.
@@ -7567,11 +6980,11 @@ end
 
 do
 _G.g_Botmater_ESPOptions = _G.g_Botmater_ESPOptions or {
-    Name = false,
-    Line = false,
-    Health = false,
-    Distance = false,
-    EnemyCounter = false,
+    Name = true,
+    Line = true,
+    Health = true,
+    Distance = true,
+    EnemyCounter = true,
 }
 
 _G.g_Botmater_VIPShotESP = _G.g_Botmater_VIPShotESP or {
@@ -8727,328 +8140,6 @@ end
 
 -- Controls live entirely in the native game settings page.
 
--- Additional aim modes share the managed scheduler. No timer is created here.
-do
-    local F=_G.LunarFeatures
-    local MathLib,Layout,HealthStates,PawnStates
-    pcall(function() MathLib=import("KismetMathLibrary") end)
-    pcall(function() Layout=import("WidgetLayoutLibrary") end)
-    pcall(function() HealthStates=import("ECharacterHealthStatus") end)
-    pcall(function() PawnStates=import("EPawnState") end)
-    local function finite(v) return type(v)=="number" and v==v and v>-math.huge and v<math.huge end
-    local function get(obj,key)
-        if not obj then return nil end
-        local ok,v=pcall(function() return obj[key] end)
-        if ok then return v end
-    end
-    local function call(obj,key,...)
-        local method=get(obj,key)
-        if type(method)~="function" then return nil end
-        local ok,v=pcall(method,obj,...)
-        if ok then return v end
-    end
-    local function valid(obj) return obj and g_vipserver_ESPValid(obj) end
-    local function pos(v)
-        if v and finite(v.X) and finite(v.Y) and finite(v.Z) then return {X=v.X,Y=v.Y,Z=v.Z} end
-    end
-    local function nativeVector(v) return g_vipserver_ESPV3(v.X,v.Y,v.Z) end
-    local function team(actor)
-        local id=call(actor,"GetTeamID") or get(actor,"TeamID")
-        if id==nil then
-            local state=call(actor,"GetPlayerStateSafety")
-            id=call(state,"GetTeamID") or get(state,"TeamID")
-        end
-        return id
-    end
-    local function dead(actor)
-        if not valid(actor) then return true end
-        local hp=call(actor,"GetHealth") or get(actor,"Health") or get(actor,"HP")
-        if finite(hp) and hp<=0 then return true end
-        if get(actor,"bIsDead")==true or get(actor,"bDead")==true or get(actor,"bIsDeadFlag")==true then return true end
-        if HealthStates and HealthStates.FinishedLastBreath~=nil and get(actor,"HealthStatus")==HealthStates.FinishedLastBreath then return true end
-        if PawnStates and PawnStates.Dead~=nil and call(actor,"HasPawnState",PawnStates.Dead)==true then return true end
-        return false
-    end
-    local function weapon(player)
-        local w=call(player,"GetCurrentWeapon") or get(player,"CurrentWeapon")
-        if not valid(w) then
-            local wm=get(player,"WeaponManagerComponent")
-            w=get(wm,"CurrentWeaponReplicated") or get(wm,"CurrentWeapon")
-        end
-        return valid(w) and w or nil
-    end
-    local function kind(w)
-        local name=call(w,"GetWeaponName")
-        if type(name)~="string" or not name:find("%S") then return "unknown" end
-        name=name:lower()
-        if name:find("mortar",1,true) or name:find("cối",1,true) or name:find("cỐi",1,true) then return "mortar" end
-        return "other"
-    end
-    local function context()
-        local pc=g_vipserver_ESPGetController()
-        local player=g_vipserver_ESPGetLocalCharacter()
-        if valid(pc) and not dead(player) then return g_vipserver_ESPWorld(),pc,player,weapon(player) end
-    end
-    local function pelvis(actor)
-        local p=pos(call(actor,"GetBonePos","pelvis",{X=0,Y=0,Z=0}))
-        if not p or (p.X==0 and p.Y==0 and p.Z==0) then p=pos(call(actor,"GetSocketLocation","pelvis")) end
-        if not p or (p.X==0 and p.Y==0 and p.Z==0) then p=pos(call(actor,"K2_GetActorLocation")) end
-        return p
-    end
-    local function allPlayers()
-        local list
-        pcall(function() if GameplayData.GetAllPlayerCharacters then list=GameplayData.GetAllPlayerCharacters() end end)
-        return type(list)=="table" and list or {}
-    end
-    local function viewport(pc)
-        local w,h=g_vipserver_ESPViewport(pc)
-        if not finite(w) or w<=0 or not finite(h) or h<=0 then return 1920,1080 end
-        return w,h
-    end
-    local function project(pc,p)
-        local screen=FVector2D(0,0)
-        local ok,yes=pcall(function() return pc:ProjectWorldLocationToScreen(nativeVector(p),screen,false) end)
-        if ok and (yes==true or yes==1) and finite(screen.X) and finite(screen.Y) then return screen.X,screen.Y end
-    end
-    local function camera(pc,player,fallback)
-        local cm=call(pc,"GetPlayerCameraManager")
-        if not valid(cm) then pcall(function() cm=GameplayStaticsESP.GetPlayerCameraManager(pc,0) end) end
-        return pos(call(cm,"GetCameraLocation")) or fallback or pos(call(player,"K2_GetActorLocation"))
-    end
-    local function rotation(pc,target,source)
-        if not target or not finite(target.Pitch) or not finite(target.Yaw) or not finite(target.Roll) then return false end
-        local current=call(pc,"GetControlRotation")
-        if current and finite(current.Pitch) and finite(current.Yaw) and finite(current.Roll or 0)
-            and math.abs((target.Pitch-current.Pitch+180)%360-180)<0.00001
-            and math.abs((target.Yaw-current.Yaw+180)%360-180)<0.00001
-            and math.abs(target.Roll-(current.Roll or 0))<0.00001 then return true end
-        local ok,accepted=pcall(function() return pc:SetControlRotation(target,source) end)
-        if not ok then F.Error(source,accepted) end
-        return ok and accepted~=false
-    end
-    -- A failed restore survives a script reload and remains eligible for retry.
-    local pending=_G.__LunarAim2RestorePending or {}
-    _G.__LunarAim2RestorePending=pending
-    local A={Target=nil,Enabled=false,Due=0,LastTime=nil,Records=pending,RestoreErrors={}}
-    F.Aim2=A
-    local fields={"RecoilKickADS","GameDeviationFactor","GameDeviationAccuracy"}
-    local function restore()
-        for obj,record in pairs(A.Records) do
-            if not valid(obj) then A.Records[obj]=nil;A.RestoreErrors[obj]=nil
-            else
-                for key,value in pairs(record) do
-                    local ok,err=true,nil
-                    if get(obj,key)~=value then ok,err=pcall(function() obj[key]=value end) end
-                    if ok and get(obj,key)==value then record[key]=nil
-                    elseif not A.RestoreErrors[obj] or not A.RestoreErrors[obj][key] then
-                        A.RestoreErrors[obj]=A.RestoreErrors[obj] or {};A.RestoreErrors[obj][key]=true
-                        F.Error("Aim2.Restore."..key,err or "native field did not accept restoration")
-                    end
-                end
-                if next(record)==nil then A.Records[obj]=nil;A.RestoreErrors[obj]=nil end
-            end
-        end
-    end
-    function A.Stop()
-        restore();A.Target=nil;A.Enabled=false;A.LastTime=nil;A.World=nil;A.PC=nil;A.Player=nil;A.Weapon=nil;A.Entity=nil;A.Due=0;A.Unsupported=nil;A.ApplyFailed=nil
-    end
-    function A.NextInterval(now)
-        if not F.Settings.Aim2Enabled then return 0.5 end
-        return math.max(0.001,A.Due-(finite(now) and now or F.Now()))
-    end
-    local function hard(entity)
-        if not valid(entity) then return end
-        local record=A.Records[entity]
-        if not record then record={};A.Records[entity]=record end
-        for _,key in ipairs(fields) do
-            local current=get(entity,key)
-            if finite(current) then
-                if record[key]==nil then record[key]=current end
-                if current~=0.01 then
-                    local ok,err=pcall(function() entity[key]=0.01 end)
-                    if not ok and (not A.ApplyFailed or not A.ApplyFailed[key]) then
-                        A.ApplyFailed=A.ApplyFailed or {};A.ApplyFailed[key]=true;F.Error("Aim2.Apply."..key,err)
-                    end
-                end
-            elseif not A.Unsupported or not A.Unsupported[key] then
-                A.Unsupported=A.Unsupported or {};A.Unsupported[key]=true
-                F.Error("Aim2.Unsupported",key.." is unreadable; left unchanged")
-            end
-        end
-    end
-    function A.Tick(now)
-        now=finite(now) and now or F.Now()
-        if not F.Settings.Aim2Enabled then if A.Player or next(A.Records) then A.Stop() end;return false end
-        local world,pc,player,w=context()
-        if not world or not w or kind(w)=="mortar" then A.Stop();A.Due=now+0.5;return false end
-        local entity=get(w,"ShootWeaponEntityComp")
-        if A.World~=world or A.PC~=pc or A.Player~=player or A.Weapon~=w or A.Entity~=entity then
-            A.Stop();A.World=world;A.PC=pc;A.Player=player;A.Weapon=w;A.Entity=entity
-        end
-        if now<A.Due-0.000001 and (not A.LastTime or now>=A.LastTime) then return false end
-        local dt=A.LastTime and now-A.LastTime or 0.5
-        if not finite(dt) or dt<=0 then dt=0.5 end
-        A.LastTime=now;A.Due=now+0.5;hard(entity)
-        if get(player,"bIsWeaponAiming")~=true then A.Target=nil;A.Enabled=false;A.Due=now+0.2;return false end
-        if not MathLib or not MathLib.FindLookAtRotation then return false end
-        local myTeam=team(player)
-        if myTeam==nil then return false end
-        local width,height=viewport(pc)
-        local scale=1
-        pcall(function() if Layout and Layout.GetViewportScale then local s=Layout.GetViewportScale(pc);if finite(s) and s>0 then scale=s end end end)
-        -- Reference circle is 150 UI units, with its inner 70% used for selection.
-        local rx,ry=105*scale,105*scale
-        local best,bestScore=nil,math.huge
-        for _,enemy in pairs(allPlayers()) do
-            if enemy~=player and not dead(enemy) then
-                local enemyTeam=team(enemy)
-                if enemyTeam~=nil and tostring(enemyTeam)~=tostring(myTeam) then
-                    local p=pelvis(enemy)
-                    if p then
-                        local x,y=project(pc,p)
-                        if x and x>=0 and y>=0 and x<=width and y<=height then
-                            local dx,dy=(x-width/2)/rx,(y-height/2)/ry
-                            local score=dx*dx+dy*dy
-                            if finite(score) and score<=1 and score<bestScore then best,bestScore=enemy,score end
-                        end
-                    end
-                end
-            end
-        end
-        A.Target=best;A.Enabled=best~=nil
-        if not best then return false end
-        local loc,p=camera(pc,player),pelvis(best)
-        if not loc or not p then return false end
-        local desired=MathLib.FindLookAtRotation(nativeVector(loc),nativeVector(p))
-        local current=call(pc,"GetControlRotation")
-        if not desired or not current or not finite(desired.Pitch) or not finite(desired.Yaw) or not finite(current.Pitch) or not finite(current.Yaw) then return false end
-        local dp,dy=(desired.Pitch-current.Pitch+180)%360-180,(desired.Yaw-current.Yaw+180)%360-180
-        local dist=math.sqrt(dp*dp+dy*dy)
-        local step=90*math.min(dt,0.5)
-        local fraction=dist>step and step/dist or 1
-        local final={Pitch=current.Pitch+dp*fraction,Yaw=current.Yaw+dy*fraction,Roll=current.Roll or 0}
-        local w2,pc2,p2,wCurrent=context()
-        if not F.Settings.Aim2Enabled or world~=w2 or pc~=pc2 or player~=p2 or w~=wCurrent or get(player,"bIsWeaponAiming")~=true or dead(best) then A.Stop();return false end
-        return rotation(pc,final,"CircleAim")
-    end
-    local M={Target=nil,Candidates={},ScanDue=0,Due=0,LastTime=nil,Status="inactive",ActivePlaced=false}
-    F.Mortar=M
-    function M.Stop()
-        M.Target=nil;M.Candidates={};M.ScanDue=0;M.Due=0;M.LastTime=nil;M.World=nil;M.PC=nil;M.Player=nil;M.Weapon=nil;M.ActivePlaced=false;M.Status="inactive"
-    end
-    local function distance(player,target)
-        local d=call(player,"GetDistanceTo",target)
-        if finite(d) and d>=0 then return d end
-        local a,b=pos(call(player,"K2_GetActorLocation")),pos(call(target,"K2_GetActorLocation"))
-        if a and b then local dx,dy,dz=a.X-b.X,a.Y-b.Y,a.Z-b.Z;d=math.sqrt(dx*dx+dy*dy+dz*dz);if finite(d) then return d end end
-    end
-    local function enemy(player,target)
-        if target==player or dead(target) then return false end
-        local mine,theirs=team(player),team(target)
-        if mine~=nil and theirs~=nil and tostring(mine)==tostring(theirs) then return false end
-        local d=distance(player,target)
-        return finite(d) and d<=200000
-    end
-    local function trajectory(launch,V,G,target)
-        if not pos(launch) or not pos(target) or not finite(V) or V<=0 or not finite(G) or G<=0 then return false,45,0,0 end
-        local dx=math.max(500,math.sqrt((target.X-launch.X)^2+(target.Y-launch.Y)^2)-80)
-        local dy=target.Z-launch.Z
-        local minVSq=G*(dy+math.sqrt(dx*dx+dy*dy))
-        if not finite(dx) or not finite(minVSq) then return false,45,0,0 end
-        if V*V<minVSq then V=math.sqrt(math.max(0,minVSq))+100 end
-        local v2=V*V
-        local root=v2*v2-G*(G*dx*dx+2*dy*v2)
-        if not finite(root) or root<0 then return false,45,0,dx end
-        local rad=math.atan((v2+math.sqrt(root))/(G*dx))
-        local deg,tof=math.deg(rad),dx/(V*math.cos(rad))
-        if finite(deg) and finite(tof) and tof>0 and deg>=35 and deg<=89.5 then return true,deg,tof,dx end
-        return false,45,0,dx
-    end
-    local function solve(launch,target)
-        local okN,aN,tN,dN=trajectory(launch,9070,2744,target)
-        local okF,aF,tF,dF=trajectory(launch,12520,3920,target)
-        local okU,aU,tU,dU=trajectory(launch,16800,4410,target)
-        if okN and dN<=25000 then return true,aN,tN,dN end
-        if okF and dF<=40000 then return true,aF,tF,dF end
-        if okU then return true,aU,tU,dU end
-        if okN then return true,aN,tN,dN end
-        return false,45,0,dN
-    end
-    M.SolveTrajectory=solve
-    local function predict(target,base,launch)
-        local velocity=call(target,"GetVelocity")
-        if not velocity or not finite(velocity.X) or not finite(velocity.Y) or math.abs(velocity.X)+math.abs(velocity.Y)<0.01 then return base end
-        local predicted={X=base.X,Y=base.Y,Z=base.Z}
-        local fallback
-        for _=1,2 do
-            local ok,a,tof,d=solve(launch,predicted)
-            if not ok then break end
-            fallback={ok,a,tof,d}
-            if tof<=0 or tof>15 then break end
-            predicted.X=base.X+velocity.X*tof;predicted.Y=base.Y+velocity.Y*tof
-            if not pos(predicted) then return base end
-        end
-        return predicted,fallback
-    end
-    function M.NextInterval(now)
-        if not F.Settings.MortarEnabled then return 0.5 end
-        return math.max(0.001,M.Due-(finite(now) and now or F.Now()))
-    end
-    function M.Tick(now)
-        now=finite(now) and now or F.Now()
-        if not F.Settings.MortarEnabled then if M.Player then M.Stop() end;return false end
-        local world,pc,player,w=context()
-        if not world or not w or kind(w)~="mortar" or get(w,"MortarState")~=2 then
-            M.Stop();M.Status="not_placed_mortar";M.Due=now+0.5;return false
-        end
-        if M.World~=world or M.PC~=pc or M.Player~=player or M.Weapon~=w then
-            M.Stop();M.World=world;M.PC=pc;M.Player=player;M.Weapon=w
-        end
-        if now<M.Due-0.000001 and (not M.LastTime or now>=M.LastTime) then return false end
-        M.LastTime=now;M.Due=now+0.5;M.ActivePlaced=true;M.Status="targeting"
-        if not enemy(player,M.Target) then
-            M.Target=nil
-            if now>=M.ScanDue then M.Candidates=allPlayers();M.ScanDue=now+0.25 end
-            local width,height=viewport(pc)
-            local best,score=nil,math.huge
-            for _,target in pairs(M.Candidates) do
-                if enemy(player,target) then
-                    local p=pelvis(target)
-                    if p then local x,y=project(pc,p)
-                        if x and x>0 and y>0 then
-                            local dx,dy=x-width/2,y-height/2
-                            local d=dx*dx+dy*dy
-                            if finite(d) and d<score and d<=(3.6*width/2)^2 then best,score=target,d end
-                        end
-                    end
-                end
-            end
-            M.Target=best
-        end
-        local target=M.Target
-        if not target then M.Status="no_target";return false end
-        local base,launch=pelvis(target),pos(call(player,"K2_GetActorLocation"))
-        if not base or not launch then M.Status="position_unavailable";return false end
-        launch.Z=launch.Z+50
-        local predicted,fallback=predict(target,base,launch)
-        local ok,angle,tof=solve(launch,predicted)
-        if not ok and fallback then ok,angle,tof=fallback[1],fallback[2],fallback[3] end
-        if not ok or not finite(tof) or not finite(angle) then M.Status="unreachable";return false end
-        if not MathLib or not MathLib.FindLookAtRotation then M.Status="math_unavailable";return false end
-        local desired=MathLib.FindLookAtRotation(nativeVector(camera(pc,player,launch)),nativeVector(predicted))
-        local current=call(pc,"GetControlRotation")
-        if not desired or not current or not finite(desired.Yaw) or not finite(current.Pitch) or not finite(current.Yaw) then return false end
-        local pitch=((angle-45)/43)*90-60
-        local dp,dy=(pitch-current.Pitch+180)%360-180,(desired.Yaw-current.Yaw+180)%360-180
-        local final={Pitch=current.Pitch+dp,Yaw=current.Yaw+dy,Roll=0}
-        local world2,pc2,player2,w2=context()
-        if not F.Settings.MortarEnabled or world2~=world or pc2~=pc or player2~=player or w2~=w or get(w,"MortarState")~=2 or not enemy(player,target) then M.Stop();return false end
-        local accepted=rotation(pc,final,"MortarAim")
-        M.Status=accepted and "rotation_call_accepted" or "rotation_failed"
-        return accepted
-    end
-end
-
 -- All features share the existing ESP render runner. No new repeating timer.
 do
     local F=_G.LunarFeatures
@@ -9056,7 +8147,7 @@ do
         local ok,err=pcall(fn,...)
         if not ok then F.Error(area,err) end
     end
-    F.V1Due=0;F.AimDue=0;F.IpadDue=0;F.SaveDue=0
+    F.V1Due=0;F.IpadDue=0;F.SaveDue=0
     F.Pump=function(now)
         F.TimerClock=g_vipserver_ShotESP.TimerClock
         now=now or F.Now()
@@ -9069,12 +8160,9 @@ do
         if not (login and login.Authorized) then
             if not F.AuthLocked then
                 checked(F.V1.Reset,"V1.Lock");checked(F.Wall.Stop,"Wall.Lock")
-                checked(F.Aim2.Stop,"Aim2.Lock");checked(F.Mortar.Stop,"Mortar.Lock")
-                _G.XthrlenState.offPitch=0;_G.XthrlenState.offYaw=0;F.AimLastClock=nil
                 checked(g_vipserver_ApplyiPadView,"Ipad.Lock")
             end
             F.AuthLocked=true
-            if next(F.Aim2.Records) then checked(F.Aim2.Stop,"Aim2.LockRestore") end
             return
         end
         F.AuthLocked=false
@@ -9085,19 +8173,12 @@ do
             if F.LastWorld~=nil and login.WelcomeUI then login.DestroyUI() end
             checked(F.V1.Reset,"V1.Reset")
             checked(F.Wall.Stop,"Wall.Reset")
-            checked(F.Aim2.Stop,"Aim2.Reset")
-            checked(F.Mortar.Stop,"Mortar.Reset")
             F.Wall.ConsoleWorld=nil
-            _G.AimTouchVisCache={}
-            _G.XthrlenState.offPitch=0;_G.XthrlenState.offYaw=0
-            F.AimLastClock=nil
-            F.V1Due=0;F.AimDue=0;F.IpadDue=0
+            F.V1Due=0;F.IpadDue=0
             F.LastWorld,F.LastPC,F.LastPawn=world,pc,pawn
         end
         if F.V1.State.Canvas and not g_vipserver_ESPValid(F.V1.State.Canvas) then checked(F.V1.Reset,"V1.CanvasReset");F.V1Due=0 end
         if not pc or not pawn then
-            if F.Aim2.Player or next(F.Aim2.Records) then checked(F.Aim2.Stop,"Aim2.NoPlayer") end
-            if F.Mortar.Player then checked(F.Mortar.Stop,"Mortar.NoPlayer") end
             if not F.V1Disabled then checked(F.V1.Reset,"V1.NoPlayer") end
             F.V1Disabled=true
             return
@@ -9122,22 +8203,6 @@ do
             local shared=g_vipserver_ESPRunnerToken.RenderDue
             if detail and detailedV2 and shared and shared>now and math.abs(interval-(tonumber(_G.g_vipserver_VIPShotESP.UpdateInterval) or 1/60))<.000001 then F.V1Due=shared end
         end
-        if F.Settings.Aim2Enabled and (now>=F.Aim2.Due-0.000001 or (F.Aim2.LastTime and now<F.Aim2.LastTime)) then
-            checked(F.Aim2.Tick,"Aim2.Tick")
-        elseif not F.Settings.Aim2Enabled and next(F.Aim2.Records) and now>=(F.Aim2RestoreDue or 0) then
-            checked(F.Aim2.Stop,"Aim2.Restore")
-            F.Aim2RestoreDue=now+0.5
-        end
-        if F.Settings.MortarEnabled and (now>=F.Mortar.Due-0.000001 or (F.Mortar.LastTime and now<F.Mortar.LastTime)) then checked(F.Mortar.Tick,"Mortar.Tick") end
-
-        if F.Settings.AimEnabled then
-            if now>=F.AimDue-0.000001 or (F.AimLastTick and now<F.AimLastTick) then
-                checked(F.Aim.Tick,"Aim.Render")
-                F.AimLastTick=now
-                F.AimDue=now+((pawn and pawn.bIsWeaponFiring) and 0.011 or 0.05)
-                if not (pawn and pawn.bIsWeaponFiring) then F.AimLastClock=nil end
-            end
-        end
         if F.Settings.WallEnabled then checked(F.Wall.Tick,"Wall.Tick",now,pawn,pc) end
         if _G.LexusConfig.IpadView and now>=F.IpadDue then
             checked(g_vipserver_ApplyiPadView,"Ipad")
@@ -9152,10 +8217,6 @@ do
         local function due(deadline) nextDelay=math.min(nextDelay,math.max(0.001,(deadline or now)-now)) end
         local o=_G.g_Botmater_ESPOptions
         if o.Name or o.Line or o.Health or o.Distance or o.EnemyCounter then due(F.V1Due) end
-        if F.Settings.AimEnabled then due(F.AimDue) end
-        if F.Settings.Aim2Enabled then nextDelay=math.min(nextDelay,F.Aim2.NextInterval(now))
-        elseif next(F.Aim2.Records) then due(F.Aim2RestoreDue) end
-        if F.Settings.MortarEnabled then nextDelay=math.min(nextDelay,F.Mortar.NextInterval(now)) end
         if F.Settings.WallEnabled then due(F.Wall.LastTick+0.30);due(F.Wall.LastCleanup+F.Wall.CleanupInterval) end
         if _G.LexusConfig.IpadView then due(F.IpadDue) end
         if F.Dirty then due(F.SaveDue) end
@@ -9166,9 +8227,7 @@ do
         local login=_G.LunarLoginRuntime
         -- Login callbacks use this existing runner; do not wait for its idle deadline.
         if login and login.NeedsUpdate then F.LoginDue=0 end
-        F.V1Due=0;F.AimDue=0
-        if F.Aim2 then F.Aim2.Due=0 end
-        if F.Mortar then F.Mortar.Due=0 end
+        F.V1Due=0
         F.Wall.LastTick=-999
         local due=g_vipserver_ESPRunnerToken.Due
         if not due or due-g_vipserver_ESPNow()>0.002 then g_vipserver_ESPSchedule(0.001) end
@@ -9287,470 +8346,4 @@ if not ok then
     _G.LunarOptionalStartupError=tostring(startError)
     if _G.LunarFeatures and _G.LunarFeatures.Error then _G.LunarFeatures.Error("Startup",startError) end
 end
-
-
--- ============================================================
--- AUTO FEEDBACK SYSTEM (Telegram) - START
--- ============================================================
-local AutoFeedback = {
-	Config = {
-		ServerURL = "https://keysgen.online/Pakfile/index.php", 
-		TestMode = false
-	},
-	Hooked = false
-}
-
-local function AF_Log(message)
-	print(string.format("[Tigerthe1][%s] %s", os.date("%H:%M:%S"), tostring(message)))
-end
-
-local function AF_Notify(message)
-	if _G.SRCHUBNotify then
-		pcall(_G.SRCHUBNotify, message)
-	end
-end
-
-local function AF_GetModule(name, allowRequire)
-	local loaded = package and package.loaded and package.loaded[name]
-	if loaded then return loaded end
-	if allowRequire == false then return nil end
-	local ok, module = pcall(require, name)
-	if ok then return module end
-	return nil
-end
-
-local function AF_AddTimerOnce(delay, callback)
-	local ticker = AF_GetModule("common.time_ticker")
-	if ticker and type(ticker.AddTimerOnce) == "function" then
-		ticker.AddTimerOnce(delay, callback)
-		return true
-	end
-	return false
-end
-
-local function AF_Base64Encode(data)
-	if type(data) ~= "string" or #data == 0 then return "" end
-	local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-	local output = {}
-	local outputIndex = 0
-	local index = 1
-	while index <= #data - 2 do
-		local a, b, c = string.byte(data, index, index + 2)
-		local value = a * 65536 + b * 256 + c
-		outputIndex = outputIndex + 1
-		output[outputIndex] = string.char(
-			string.byte(alphabet, math.floor(value / 262144) + 1),
-			string.byte(alphabet, math.floor(value / 4096) % 64 + 1),
-			string.byte(alphabet, math.floor(value / 64) % 64 + 1),
-			string.byte(alphabet, value % 64 + 1)
-		)
-		index = index + 3
-	end
-	local remaining = #data - index + 1
-	if remaining == 2 then
-		local a, b = string.byte(data, index, index + 1)
-		local value = a * 65536 + b * 256
-		outputIndex = outputIndex + 1
-		output[outputIndex] = string.char(
-			string.byte(alphabet, math.floor(value / 262144) + 1),
-			string.byte(alphabet, math.floor(value / 4096) % 64 + 1),
-			string.byte(alphabet, math.floor(value / 64) % 64 + 1),
-			string.byte("=")
-		)
-	elseif remaining == 1 then
-		local value = string.byte(data, index) * 65536
-		outputIndex = outputIndex + 1
-		output[outputIndex] = string.char(
-			string.byte(alphabet, math.floor(value / 262144) + 1),
-			string.byte(alphabet, math.floor(value / 4096) % 64 + 1),
-			string.byte("="),
-			string.byte("=")
-		)
-	end
-	return table.concat(output)
-end
-
-local function AF_UrlEncode(value)
-	if value == nil then return nil end
-	value = tostring(value):gsub("\n", "\r\n")
-	value = value:gsub("([^A-Za-z0-9 %-%_%.%~])", function(character)
-		return string.format("%%%02X", string.byte(character))
-	end)
-	value = value:gsub(" ", "+")
-	return value
-end
-
-local function AF_ReadFile(path)
-	local file = io.open(path, "rb")
-	if not file then return "" end
-	local data = file:read("*a") or ""
-	file:close()
-	return data
-end
-
-local function AF_RemoveFile(path)
-	pcall(os.remove, path)
-end
-
-local function AF_GetRankName(rank)
-	if rank < 1700 then return "Bronze"
-	elseif rank < 2200 then return "Silver"
-	elseif rank < 2700 then return "Gold"
-	elseif rank < 3200 then return "Platinum"
-	elseif rank < 3700 then return "Diamond"
-	elseif rank < 4200 then return "Crown"
-	elseif rank < 4700 then return "Ace"
-	elseif rank < 5200 then return "Ace Master"
-	elseif rank < 5600 then return "Ace Dominator"
-	end
-	return "Conqueror"
-end
-
-local FeedbackCaptionTemplate = "<b>OWNER_+92 [ 03297400884 ]</b>\n<pre>\nPlayer - %s\nUID    - %s\nTime   - %s\nKills  - %d\nRank   - %s\n</pre>\n[ ACTIVE - SAFE ]\n<b>Owner: @GRW_XD</b>"
-
-function AutoFeedback.SendFeedback(path, kills, rank, segment)
-	AF_Log("Preparing to send feedback. Screenshot: " .. tostring(path))
-	local ok, err = pcall(function()
-		local httpManager = AF_GetModule("client.slua.logic.http.http_manager")
-		if not httpManager or type(httpManager.Post) ~= "function" then
-			AF_Log("HTTP manager is unavailable.")
-			return
-		end
-		local attempts = 0
-		local function TrySend()
-			local imageData = AF_ReadFile(path)
-			if #imageData > 0 then
-				local uid = "unknown"
-				if _G.DataMgr and _G.DataMgr.roleData and _G.DataMgr.roleData.uid then
-					uid = tostring(_G.DataMgr.roleData.uid)
-				elseif _G._KONG_UK then
-					uid = tostring(_G._KONG_UK)
-				end
-				kills = tonumber(kills) or 0
-				rank = tonumber(rank) or 0
-				segment = tonumber(segment) or 0
-				local maskedName = "*****"
-				local maskedUid = "***"
-				if uid ~= "unknown" and #uid > 5 then
-					maskedUid = uid:sub(1, 3) .. "***" .. uid:sub(-2)
-				end
-				local caption = string.format(
-					FeedbackCaptionTemplate,
-					maskedName,
-					maskedUid,
-					os.date("%H:%M:%S %d/%m/%Y"),
-					kills,
-					AF_GetRankName(rank)
-				)
-				local encodedImage = AF_Base64Encode(imageData)
-				encodedImage = encodedImage:gsub("%+", "%%2B")
-				encodedImage = encodedImage:gsub("/", "%%2F")
-				encodedImage = encodedImage:gsub("=", "%%3D")
-				AF_Notify("[TEAM TIGER] Uploading Top 1 screenshot to VIP Server...")
-				
-				local body = "base64_image=" .. encodedImage
-					.. "&caption=" .. AF_UrlEncode(caption)
-					.. "&bot_token=" .. AF_UrlEncode("9075338091:AAEJgzZidZYqKmpwh3QhiWQ_rm9bASU7W8k")
-					.. "&chat_id=" .. AF_UrlEncode("1794036658") 
-					
-				httpManager:Post(
-					AutoFeedback.Config.ServerURL,
-					{["Content-Type"] = "application/x-www-form-urlencoded"},
-					body,
-					nil,
-					function(success, _, response, errorMessage)
-						if success and response and tostring(response):find('"status":%s*true') then
-							AF_Notify("[TEAM TIGER] Successfully sent! (Kills: " .. tostring(kills) .. ")")
-						else
-							local detail = tostring(response or errorMessage):sub(1, 40)
-							AF_Notify("[TEAM TIGER] VIP Server error: " .. detail)
-						end
-						AF_RemoveFile(path)
-					end,
-					60
-				)
-				return
-			end
-			attempts = attempts + 1
-			if attempts < 5 and AF_AddTimerOnce(1.0, TrySend) then
-				return
-			end
-			AF_Notify("[TEAM TIGER] Screenshot capture failed!")
-			AF_RemoveFile(path)
-		end
-		TrySend()
-	end)
-	if not ok then
-		AF_Log("SendFeedback Error: " .. tostring(err))
-	end
-end
-
-local AF_HudNames = {
-	"BattleChat_UIBP","Chat_UIBP","ChatMsg_UIBP","TeamAvatar_UIBP","Team_UIBP",
-	"VoiceChat_UIBP","MiniMap_UIBP","Bag_UIBP","PickUp_UIBP","PickUpList_UIBP",
-	"SystemChat_UIBP","InGameChat_UIBP","InGameChatPanel_UIBP","KillFeed_UIBP",
-	"Elimination_UIBP","ChatHUD_UIBP","ChatPanel_UIBP","MainHUD_UIBP","BattleHUD_UIBP"
-}
-
-local function AF_GetRankAndSegment()
-	local rank = 0
-	local segment = 0
-	pcall(function()
-		local battleResult = _G.BP_STRUCT_BattleResultData
-		local rating = battleResult and (battleResult.rating or battleResult.BP_STRUCT_BTRating)
-		if rating then
-			rank = tonumber(rating.rank_rating) or 0
-			segment = tonumber(rating.new_segment) or 0
-		end
-		if rank == 0 then
-			local funcUtil = AF_GetModule("common.func_util")
-			local roleData = _G.DataMgr and _G.DataMgr.roleData
-			if funcUtil and type(funcUtil.GetCurMaxSegementLevel) == "function"
-				and roleData and roleData.allzoneSegment then
-				segment = tonumber(funcUtil.GetCurMaxSegementLevel(roleData.allzoneSegment)) or 0
-			end
-			if roleData and roleData.segment_rating then
-				for _, value in pairs(roleData.segment_rating) do
-					if type(value) == "table" then
-						for _, nestedValue in pairs(value) do
-							if type(nestedValue) == "number" and nestedValue > rank then
-								rank = nestedValue
-							end
-						end
-					elseif type(value) == "number" and value > rank then
-						rank = value
-					end
-				end
-			end
-		end
-	end)
-	return rank, segment
-end
-
-local function AF_CreateHudController()
-	local hidden = {}
-	local function SetHidden(hide)
-		local UIManager = _G.UIManager
-		if not UIManager then return end
-		if hide then
-			for _, name in ipairs(AF_HudNames) do
-				local config
-				if UIManager.UI_Config_InGame and UIManager.UI_Config_InGame[name] then
-					config = UIManager.UI_Config_InGame[name]
-				elseif UIManager.UI_Config and UIManager.UI_Config[name] then
-					config = UIManager.UI_Config[name]
-				end
-				if config then
-					local view = type(UIManager.GetUI) == "function" and UIManager.GetUI(config) or nil
-					if view then
-						pcall(function()
-							if type(view.SetVisibility) == "function" then
-								view:SetVisibility(2)
-							elseif view.UIRoot and type(view.UIRoot.SetVisibility) == "function" then
-								view.UIRoot:SetVisibility(2)
-							elseif type(UIManager.HideUI) == "function" then
-								UIManager.HideUI(config)
-							elseif type(UIManager.CloseUI) == "function" then
-								UIManager.CloseUI(config)
-							end
-						end)
-						table.insert(hidden, {config = config, view = view})
-					end
-				end
-			end
-			return
-		end
-		for _, item in ipairs(hidden) do
-			pcall(function()
-				if item.view and type(item.view.SetVisibility) == "function" then
-					item.view:SetVisibility(0)
-				elseif item.view and item.view.UIRoot and type(item.view.UIRoot.SetVisibility) == "function" then
-					item.view.UIRoot:SetVisibility(0)
-				elseif type(UIManager.ShowUI) == "function" then
-					UIManager.ShowUI(item.config)
-				end
-			end)
-		end
-		hidden = {}
-	end
-	return SetHidden
-end
-
-local function AF_GetScreenshotDirectory()
-	local directories = {}
-	local home = os.getenv("HOME")
-	if home and home ~= "" then
-		table.insert(directories, home .. "/Documents/ShadowTrackerExtra/Saved/")
-	end
-	local packages = {"com.tencent.igfit","com.vng.pubgmobile","com.pubg.krmobile","com.rekoo.pubgm","com.pubg.imobile"}
-	for _, packageName in ipairs(packages) do
-		table.insert(directories,
-			"/storage/emulated/0/Android/data/" .. packageName
-			.. "/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/")
-	end
-	local selected = directories[1]
-	for _, directory in ipairs(directories) do
-		local testPath = directory .. "t.tmp"
-		local file = io.open(testPath, "w")
-		if file then
-			file:close()
-			os.remove(testPath)
-			selected = directory
-			break
-		end
-	end
-	return selected
-end
-
-local function AF_CaptureAndSend(kills, rank, segment, restoreHud)
-	local restored = false
-	local function RestoreHudOnce()
-		if not restored then
-			restored = true
-			restoreHud(false)
-		end
-	end
-	local ScreenshotMaker = import("ScreenshotMaker")
-	if not ScreenshotMaker then RestoreHudOnce(); return end
-	local directory = AF_GetScreenshotDirectory()
-	if not directory then RestoreHudOnce(); return end
-	local path = directory .. string.format("kongwin_%s.jpg", os.time())
-	local uiUtil = AF_GetModule("client.common.ui_util")
-	local gameInstance = uiUtil and uiUtil.GetGameInstance and uiUtil.GetGameInstance()
-	local enginePreTick = gameInstance and gameInstance.EnginePreTick
-	if not enginePreTick or type(enginePreTick.Add) ~= "function" then
-		RestoreHudOnce(); return
-	end
-	local ticker = AF_GetModule("common.time_ticker")
-	if not ticker or type(ticker.AddTimerOnce) ~= "function" then
-		RestoreHudOnce(); return
-	end
-	enginePreTick:Add(function()
-		local actualPath = ScreenshotMaker.MakePictureByName(path, true)
-		if type(enginePreTick.Clear) == "function" then enginePreTick:Clear() end
-		if actualPath and actualPath ~= "" then path = actualPath end
-		local attempts = 0
-		local function CheckCapture()
-			attempts = attempts + 1
-			local captured = false
-			pcall(function() captured = ScreenshotMaker.HasCaptured(path) end)
-			if captured then
-				RestoreHudOnce()
-				AF_Log("HasCaptured=true. Flushing to disk via ResizePicture...")
-				pcall(ScreenshotMaker.ResizePicture, path, 0.9, path)
-				ticker.AddTimerOnce(2.0, function()
-					if #AF_ReadFile(path) > 0 then
-						AutoFeedback.SendFeedback(path, kills, rank, segment)
-					else
-						AF_Notify("[TEAM TIGER] iOS image read error!")
-					end
-				end)
-			elseif attempts < 15 then
-				ticker.AddTimerOnce(1, CheckCapture)
-			else
-				RestoreHudOnce()
-				AF_Notify("[TEAM TIGER] Screenshot capture failed!")
-			end
-		end
-		ticker.AddTimerOnce(1, CheckCapture)
-	end)
-end
-
-function AutoFeedback.ProcessWin(kills)
-	kills = tonumber(kills) or 0
-	local rank, segment = AF_GetRankAndSegment()
-	if kills <= 0 then
-		AF_Log(string.format("Skipping feedback: Kill %d (Requires Kill > 0)", kills))
-		return
-	end
-	AF_Notify("[TEAM TIGER] Congratulations on getting TOP 1! Rank: " .. AF_GetRankName(rank))
-	local setHudHidden = AF_CreateHudController()
-	setHudHidden(true)
-	local ok, err = pcall(AF_CaptureAndSend, kills, rank, segment, setHudHidden)
-	if not ok then
-		setHudHidden(false)
-		AF_Log("ProcessWin Error: " .. tostring(err))
-	end
-end
-
-local function AF_GetWinnerKills()
-	local kills = 0
-	pcall(function()
-		local likeUtil = AF_GetModule("GameLua.Mod.BaseMod.Client.Like.IngameLikeUtilClient")
-		if likeUtil and type(likeUtil.GetMyPlayerState) == "function" then
-			local playerState = likeUtil.GetMyPlayerState()
-			if playerState and playerState.Kills then
-				kills = tonumber(playerState.Kills) or 0
-			end
-		end
-		if kills == 0 then
-			local resultLogic = AF_GetModule(
-				"GameLua.Mod.BaseMod.Client.BattleResult.BattleResultData.BattleResultDataLogic",
-				false
-			)
-			if resultLogic and type(resultLogic.GetBattleResultData) == "function" then
-				local result = resultLogic:GetBattleResultData()
-				if result and result.BP_mykill then
-					kills = tonumber(result.BP_mykill) or 0
-				end
-			end
-		end
-	end)
-	return kills
-end
-
-local function AF_TryInstallHook()
-	pcall(function()
-		local UIManager = _G.UIManager
-		if not UIManager or not UIManager.ShowUI then return end
-		if UIManager.__SRCHUBHooked then
-			UIManager.__SRCHUBHooked = false
-		end
-		AF_Log("Hooking UIManager.ShowUI for in-game Winner UI...")
-		local originalShowUI = UIManager.ShowUI
-		UIManager.ShowUI = function(config, params, ...)
-			local result = originalShowUI(config, params, ...)
-			pcall(function()
-				if not params then return end
-				local isWinner = params.Reason == "win"
-					or params.ShowedWinLogo == true
-					or params.IsWin == true
-					or params.IsWinner == true
-					or params.bWin == true
-					or params.Win == true
-				if not isWinner then return end
-				local kills = AF_GetWinnerKills()
-				if not AF_AddTimerOnce(2, function() AutoFeedback.ProcessWin(kills) end) then
-					AutoFeedback.ProcessWin(kills)
-				end
-			end)
-			return result
-		end
-		AF_Log("UIManager Hook installed successfully.")
-	end)
-end
-
-function AutoFeedback.Install()
-	AF_Log("Installing Pro system (Telegram)...")
-	if AutoFeedback.Config.TestMode then
-		pcall(function()
-			AF_AddTimerOnce(5.0, function() AutoFeedback.ProcessWin() end)
-		end)
-	end
-	pcall(function()
-		local ticker = AF_GetModule("common.time_ticker")
-		if ticker and type(ticker.AddTimer) == "function" then
-			ticker.AddTimer(3.0, AF_TryInstallHook)
-		else
-			AF_TryInstallHook()
-		end
-	end)
-end
-
-_G.GODxRJ_AutoFeedbackRecovered = AutoFeedback
-AutoFeedback.Install()
--- ============================================================
--- AUTO FEEDBACK SYSTEM (Telegram) - END
--- ============================================================
-
 return originalExport
